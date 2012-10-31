@@ -1,7 +1,12 @@
 VERSION = 3
 PATCHLEVEL = 0
+<<<<<<< HEAD
 SUBLEVEL = 49
 EXTRAVERSION = -Green-JB.4.1
+=======
+SUBLEVEL = 50
+EXTRAVERSION =
+>>>>>>> 27d0858... Linux 3.0.50
 NAME = Sneaky Weasel
 
 # *DOCUMENTATION*
