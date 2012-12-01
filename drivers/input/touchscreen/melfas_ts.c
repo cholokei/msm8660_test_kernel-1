@@ -89,7 +89,7 @@
 #define TSP_PATTERN_TRACTKING
 
 #if SET_DOWNLOAD_BY_GPIO
-#include <mcs8000_download.h>
+#include "mcs8000_download.h"
 #endif // SET_DOWNLOAD_BY_GPIO
 
 unsigned long saved_rate;					
@@ -148,14 +148,14 @@ static void TSP_reboot(void);
 
 static struct muti_touch_info g_Mtouch_info[MELFAS_MAX_TOUCH];
 
-
+#if 0
 static int melfas_init_panel(struct melfas_ts_data *ts)
 {
 	int buf = 0x00;
 	int ret;
-	ret = i2c_master_send(ts->client, &buf, 1);
+	ret = i2c_master_send(ts->client, (const char *)&buf, 1);
 
-	ret = i2c_master_send(ts->client, &buf, 1);
+	ret = i2c_master_send(ts->client, (const char *)&buf, 1);
 
 	if(ret <0)
 	{
@@ -165,6 +165,7 @@ static int melfas_init_panel(struct melfas_ts_data *ts)
 
 	return true;
 }
+#endif
 
 #ifdef TA_DETECTION
 static void tsp_ta_probe(int ta_status)
@@ -289,7 +290,7 @@ static void melfas_ts_get_data(struct work_struct *work)
 
 	if (tsp_enabled == false) {
 		printk(KERN_ERR "[TSP ]%s. tsp_disabled.\n", __func__);
-		return 1;
+		return;
 	}
 #if DEBUG_PRINT
 	printk(KERN_ERR "%s start\n", __func__);
@@ -376,7 +377,7 @@ static void melfas_ts_get_data(struct work_struct *work)
 		tsp_pattern_tracking(ts, i, g_Mtouch_info[i].posX, g_Mtouch_info[i].posY);
 #endif
 
-#if TOUCH_NON_SLOT
+#if defined(TOUCH_NON_SLOT)
 		input_report_abs(ts->input_dev, ABS_MT_TRACKING_ID, i);
 		input_report_abs(ts->input_dev, ABS_MT_POSITION_X, g_Mtouch_info[i].posX);
 		input_report_abs(ts->input_dev, ABS_MT_POSITION_Y, g_Mtouch_info[i].posY);
@@ -495,13 +496,13 @@ static ssize_t set_tsp_firm_version_read_show(struct device *dev, struct device_
 	uint8_t buff[7] = {0,};
 
 	buff[0] = MIP_TSP_REVISION;
-	ret = i2c_master_send(ts->client, &buff, 1);
+	ret = i2c_master_send(ts->client, (const char *)&buff, 1);
 	if(ret < 0)
 	{
 		printk(KERN_ERR "%s : i2c_master_send [%d]\n", __func__, ret);
 	}
 
-	ret = i2c_master_recv(ts->client, &buff, 7);
+	ret = i2c_master_recv(ts->client, (char *)&buff, 7);
 	if(ret < 0)
 	{
 		printk(KERN_ERR "%s : i2c_master_recv [%d]\n", __func__, ret);
@@ -748,7 +749,7 @@ static int atoi(char *str)
 	int count = 0;
 	if( str == NULL ) 
 		return -1;
-	while( str[count] != NULL && str[count] >= '0' && str[count] <= '9' )
+	while( str[count] != 0 && str[count] >= '0' && str[count] <= '9' )
 	{		
 		result = result * 10 + str[count] - '0';
 		++count;
@@ -764,7 +765,7 @@ ssize_t disp_all_refdata_show(struct device *dev, struct device_attribute *attr,
 ssize_t disp_all_refdata_store(struct device *dev, struct device_attribute *attr,
 								   const char *buf, size_t size)
 {
-	index = atoi(buf);
+	index = atoi((char *)buf);
 
 	printk(KERN_ERR "%s : value %d\n", __func__, index);
 
@@ -860,7 +861,7 @@ ssize_t disp_all_deltadata_show(struct device *dev, struct device_attribute *att
 ssize_t disp_all_deltadata_store(struct device *dev, struct device_attribute *attr,
 								   const char *buf, size_t size)
 {
-	index = atoi(buf);
+	index = atoi((char *)buf);
 	printk(KERN_ERR "Delta data %d", index);
   	return size;
 }
@@ -1089,7 +1090,7 @@ static void release_all_fingers(struct melfas_ts_data *ts)
 	printk(KERN_ERR "%s %s(%d)\n", __func__, ts->input_dev->name, i);
 
 		g_Mtouch_info[i].strength = 0;
-#if TOUCH_NON_SLOT
+#if defined(TOUCH_NON_SLOT)
 		input_report_abs(ts->input_dev, ABS_MT_TRACKING_ID, i);
 		input_report_abs(ts->input_dev, ABS_MT_POSITION_X, g_Mtouch_info[i].posX);
 		input_report_abs(ts->input_dev, ABS_MT_POSITION_Y, g_Mtouch_info[i].posY);
@@ -1236,7 +1237,7 @@ init_again:
 	ts->client = client;
 	i2c_set_clientdata(client, ts);
 	ts->power(true);
-	ret = i2c_master_send(ts->client, &buf, 1);
+	ret = i2c_master_send(ts->client, (const char *)&buf, 1);
 
 #ifdef CONFIG_USA_MODEL_SGH_I757
 	if (ret < 0){
@@ -1256,13 +1257,13 @@ init_again:
 
 #if SET_DOWNLOAD_BY_GPIO
 	buf[0] = MIP_TSP_REVISION;
-	ret = i2c_master_send(ts->client, &buf, 1);
+	ret = i2c_master_send(ts->client, (const char *)&buf, 1);
 	if(ret < 0)
 	{
 		printk(KERN_ERR "%s: i2c_master_send [%d]\n", __func__, ret);
 	}
 
-	ret = i2c_master_recv(ts->client, &buf, 7);
+	ret = i2c_master_recv(ts->client, (char *)&buf, 7);
 	if(ret < 0)
 	{
 		printk(KERN_ERR "%s: i2c_master_recv [%d]\n", __func__, ret);
@@ -1302,7 +1303,7 @@ init_again:
 	ts->input_dev->keybit[BIT_WORD(KEY_BACK)] |= BIT_MASK(KEY_BACK);		
 	ts->input_dev->keybit[BIT_WORD(KEY_SEARCH)] |= BIT_MASK(KEY_SEARCH);			
 
-#if TOUCH_NON_SLOT
+#if defined(TOUCH_NON_SLOT)
 	input_set_abs_params(ts->input_dev, ABS_MT_POSITION_X, 0, TS_MAX_X_COORD, 0, 0);
 	input_set_abs_params(ts->input_dev, ABS_MT_POSITION_Y, 0, TS_MAX_Y_COORD, 0, 0);
 	input_set_abs_params(ts->input_dev, ABS_MT_TOUCH_MAJOR, 0, TS_MAX_Z_TOUCH, 0, 0);
@@ -1388,9 +1389,8 @@ init_again:
 #ifdef TSP_BOOST
 	TSP_boost(ts, is_boost);
 #endif
-#if DEBUG_PRINT
 	printk(KERN_INFO "%s: Start touchscreen. name: %s, irq: %d\n", __func__, ts->client->name, ts->client->irq);
-#endif
+
 	return 0;
 
 err_request_irq:

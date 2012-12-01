@@ -751,31 +751,6 @@ void fsa9480_audiopath_control(int enable)
 {
 	struct i2c_client *client = local_usbsw->client;
 	dev_info(&client->dev, "%s(%d)\n", __func__, enable);
-#if defined(CONFIG_USA_MODEL_SGH_I717) || defined (CONFIG_USA_MODEL_SGH_T769)
-	if(enable) {
-		if(Dockconnected && !get_sec_det_jack_state())
-			fsa9480_manual_switching(SWITCH_PORT_AUDIO); /* dock audio path On */
-		else
-			dev_info(&client->dev, "%s: does not On dock audio (dock=%d, earjack=%d)\n", __func__, Dockconnected, get_sec_det_jack_state());
-	} else {
-		if(!Dockconnected || (Dockconnected && get_sec_det_jack_state()))
-			fsa9480_manual_switching(SWITCH_PORT_USB); /* dock audio path Off */
-		else
-			dev_info(&client->dev, "%s: does not Off dock audio (dock=%d, earjack=%d)\n", __func__, Dockconnected, get_sec_det_jack_state());
-	}
-#else
-	if(enable) {
-		if(isDeskdockconnected && !get_sec_det_jack_state())
-			fsa9480_manual_switching(SWITCH_PORT_AUDIO); /* dock audio path On */
-		else
-			dev_info(&client->dev, "%s: does not On dock audio (dock=%d, earjack=%d)\n", __func__, isDeskdockconnected, get_sec_det_jack_state());
-	} else {
-		if(!isDeskdockconnected || (isDeskdockconnected && get_sec_det_jack_state()))
-			fsa9480_manual_switching(SWITCH_PORT_USB); /* dock audio path Off */
-		else
-			dev_info(&client->dev, "%s: does not Off dock audio (dock=%d, earjack=%d)\n", __func__, isDeskdockconnected, get_sec_det_jack_state());
-	}
-#endif
 }
 
 
