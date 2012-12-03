@@ -424,9 +424,6 @@ extern struct cpufreq_governor cpufreq_gov_smartass2;
 #elif defined(CONFIG_CPU_FREQ_DEFAULT_GOV_BADASS)
 extern struct cpufreq_governor cpufreq_gov_badass;
 #define CPUFREQ_DEFAULT_GOVERNOR  (&cpufreq_gov_badass)
-#elif defined(CONFIG_CPU_FREQ_DEFAULT_GOV_INTERACTIVEX)
-extern struct cpufreq_governor cpufreq_gov_interactivex;
-#define CPUFREQ_DEFAULT_GOVERNOR	(&cpufreq_gov_interactivex)
 #elif defined(CONFIG_CPU_FREQ_DEFAULT_GOV_GALLIMAUFRY)
 extern struct cpufreq_governor cpufreq_gov_gallimaufry;
 #define CPUFREQ_DEFAULT_GOVERNOR	(&cpufreq_gov_gallimaufry)
@@ -448,6 +445,9 @@ extern struct cpufreq_governor cpufreq_gov_lagfree;
 #elif defined(CONFIG_CPU_FREQ_DEFAULT_GOV_SCARY)
 extern struct cpufreq_governor cpufreq_gov_scary;
 #define CPUFREQ_DEFAULT_GOVERNOR  (&cpufreq_gov_scary)
+#elif defined(CONFIG_CPU_FREQ_DEFAULT_GOV_ADAPTIVE)
+extern struct cpufreq_governor cpufreq_gov_adaptive;
+#define CPUFREQ_DEFAULT_GOVERNOR	(&cpufreq_gov_adaptive)
 #endif
 
 
