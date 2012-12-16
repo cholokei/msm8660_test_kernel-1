@@ -2,10 +2,16 @@
  * Driver for keys on GPIO lines capable of generating interrupts.
  *
  * Copyright 2005 Phil Blundell
+ * Copyright 2011 Michael Richter (alias neldar)
+ * Copyright 2012 Jeffrey Clark <h0tw1r3@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
+ * 
+ * BLN hack oriignally by neldar for SGS. Adapted for SGSII by creams
+ * 			addapted for samsung-msm8660-common by Mr. X
+ * add E120L support by Socim
  */
 
 #include <linux/module.h>
@@ -27,6 +33,9 @@
 #include <asm/io.h>
 #include "cypress-touchkey.h"
 #include <linux/regulator/consumer.h>
+#if defined(CONFIG_GENERIC_BLN)
+#include <linux/bln.h>
+#endif
 
 /*
 Melfas touchkey register
@@ -47,7 +56,12 @@ Melfas touchkey register
 #define END_KEY 0x04
 
 #define I2C_M_WR 0		/* for i2c */
+
+#if defined (CONFIG_TOUCHKEY_HAPTIC)
+#define DEVICE_NAME "melfas_touchkey"
+#else
 #define DEVICE_NAME "sec_touchkey"
+#endif
 
 /*sec_class sysfs*/
 extern struct class *sec_class;
@@ -167,7 +181,7 @@ static int i2c_touchkey_write(u8 * val, unsigned int len)
 	struct i2c_msg msg[1];
 	int retry = 2;
 
-	if ((touchkey_driver == NULL) || !(touchkey_enable == 1)) {
+	if (touchkey_driver == NULL) {
 		printk(KERN_DEBUG "[TKEY] touchkey is not enabled.W\n");
 		return -ENODEV;
 	}
@@ -444,6 +458,10 @@ static int melfas_touchkey_reboot(void)
     int index =0;
     int ret = 0;
     signed char int_data[] ={0x80};
+    
+    if (touchkey_enable < 0)
+        return;
+
     touchkey_enable = 0;
     printk(KERN_ERR "melfas_touchkey_reboot S\n");
 
@@ -651,6 +669,11 @@ static void melfas_touchkey_early_resume(struct early_suspend *h)
 
 	set_touchkey_debug('R');
 	printk(KERN_DEBUG "[TKEY] melfas_touchkey_early_resume\n");
+	#if defined(CONFIG_GENERIC_BLN)
+	if (touchkey_enable == -3) {
+		cancel_bln_activity();
+	} else
+#endif	
 	if (touchkey_enable < 0) {
 		printk("[TKEY] %s touchkey_enable: %d\n", __FUNCTION__, touchkey_enable);
 		return;
@@ -746,6 +769,45 @@ static void melfas_touchkey_early_resume(struct early_suspend *h)
 	#endif
 }
 #endif				// End of CONFIG_HAS_EARLYSUSPEND
+
+#if defined(CONFIG_GENERIC_BLN)
+static void cypress_touchkey_enable_backlight(void) {
+    signed char int_data[] ={0x10};
+    i2c_touchkey_write(int_data, 1);
+}
+
+static void cypress_touchkey_disable_backlight(void) {
+    signed char int_data[] ={0x20};
+    i2c_touchkey_write(int_data, 1);
+}
+
+static bool cypress_touchkey_enable_led_notification(void) {
+    if (touchkey_enable)
+        return false;
+
+    tkey_vdd_enable(1);
+    msleep(50);
+    tkey_led_vdd_enable(1);
+
+    touchkey_enable = -3;
+    return true;
+}
+
+static void cypress_touchkey_disable_led_notification(void) {
+    tkey_led_vdd_enable(0);
+    tkey_vdd_enable(0);
+
+    touchkey_enable = 0;
+}
+
+static struct bln_implementation cypress_touchkey_bln = {
+    .enable = cypress_touchkey_enable_led_notification,
+    .disable = cypress_touchkey_disable_led_notification,
+    .on = cypress_touchkey_enable_backlight,
+    .off = cypress_touchkey_disable_backlight,
+};
+#endif
+
 
 extern int mcsdl_download_binary_data(void);
 static int i2c_touchkey_probe(struct i2c_client *client, const struct i2c_device_id *id)
@@ -852,6 +914,9 @@ static int i2c_touchkey_probe(struct i2c_client *client, const struct i2c_device
 	}
 #endif
 	set_touchkey_debug('K');
+#if defined(CONFIG_GENERIC_BLN)
+    register_bln_implementation(&cypress_touchkey_bln);
+#endif
 	return 0;
 }
 
