@@ -77,7 +77,6 @@ int __must_check gen_pool_add_virt(struct gen_pool *pool, unsigned long virt, ph
 		 size_t size, int nid)
 {
 	struct gen_pool_chunk *chunk;
-<<<<<<< HEAD
 	size_t nbytes;
 
 	if (WARN_ON(!virt || virt + size < virt ||
@@ -87,11 +86,10 @@ int __must_check gen_pool_add_virt(struct gen_pool *pool, unsigned long virt, ph
 	size = size >> pool->order;
 	if (WARN_ON(!size))
 		return -EINVAL;
-=======
+
 	int nbits = size >> pool->min_alloc_order;
 	int nbytes = sizeof(struct gen_pool_chunk) +
 				BITS_TO_LONGS(nbits) * sizeof(long);
->>>>>>> b6d1ac7... genalloc: stop crashing the system when destroying a pool
 
 	nbytes = sizeof *chunk + BITS_TO_LONGS(size) * sizeof *chunk->bits;
 
