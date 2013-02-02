@@ -26,6 +26,7 @@
 #include <linux/init.h>
 #include <linux/compiler.h>
 #include <linux/rbtree.h>
+#include <linux/version.h>
 
 #include <asm/div64.h>
 
@@ -305,12 +306,14 @@ vr_move_request(vd, rq);
 return 1;
 }
 
+#if LINUX_VERSION_CODE <= KERNEL_VERSION(2,6,38)
 static int
 vr_queue_empty(struct request_queue *q)
 {
 struct vr_data *vd = vr_get_data(q);
 return RB_EMPTY_ROOT(&vd->sort_list);
 }
+#endif
 
 static void
 vr_exit_queue(struct elevator_queue *e)
@@ -408,21 +411,24 @@ __ATTR_NULL
 };
 
 static struct elevator_type iosched_vr = {
- .ops = {
- .elevator_merge_fn = vr_merge,
- .elevator_merged_fn = vr_merged_request,
- .elevator_merge_req_fn = vr_merged_requests,
- .elevator_dispatch_fn = vr_dispatch_requests,
- .elevator_add_req_fn = vr_add_request,
- .elevator_former_req_fn = elv_rb_former_request,
- .elevator_latter_req_fn = elv_rb_latter_request,
- .elevator_init_fn = vr_init_queue,
- .elevator_exit_fn = vr_exit_queue,
- },
+.ops = {
+.elevator_merge_fn = vr_merge,
+.elevator_merged_fn = vr_merged_request,
+.elevator_merge_req_fn = vr_merged_requests,
+.elevator_dispatch_fn = vr_dispatch_requests,
+.elevator_add_req_fn = vr_add_request,
+#if LINUX_VERSION_CODE <= KERNEL_VERSION(2,6,38)
+.elevator_queue_empty_fn = vr_queue_empty,
+#endif
+.elevator_former_req_fn = elv_rb_former_request,
+.elevator_latter_req_fn = elv_rb_latter_request,
+.elevator_init_fn = vr_init_queue,
+.elevator_exit_fn = vr_exit_queue,
+},
 
- .elevator_attrs = vr_attrs,
- .elevator_name = "vr",
- .elevator_owner = THIS_MODULE,
+.elevator_attrs = vr_attrs,
+.elevator_name = "vr",
+.elevator_owner = THIS_MODULE,
 };
 
 static int __init vr_init(void)
